@@ -15,46 +15,48 @@ def eq2(t, y):
 def sol2(t) : #condition init y[0] = 2
     return 2*np.exp((-1/2)*t) 
 
-######################################### solve_ivp 
-
-tps1 = time.perf_counter()
-solu = solve_ivp(eq2, [0, 100], [2])
-tps2 = time.perf_counter()
-total_time = tps2 - tps1
 
 ######################################### my_ODE45
 
+#t_eval = np.linspace(0,10,1000)
 my_tps1 = time.perf_counter()
-[t, y] = myODE45(eq2, [0, 100], [2], None)
+[t, y] = myODE45(eq1, np.array([0, 100]), np.array([2,4,6])) #np.array([0, 100])
 my_tps2 = time.perf_counter()
 my_total_time = my_tps2 - my_tps1
 
-######################################### real evaluation
+##### real evaluation
 
-real_sol = np.zeros((np.size(t)))
+real_sol = np.zeros((3,t.size))
+rel_erreur = np.zeros((3,t.size))
+rel_erreur_norm = np.zeros(t.size)
+for i in range(t.size):
+    real_sol[:,i] = sol1(t[i])
+    rel_erreur[:,i] = np.abs((real_sol[:,i] - y[:,i])/real_sol[:,i])
+    rel_erreur_norm[i] = np.linalg.norm(rel_erreur[:,i])
 
-for i in range(np.size(t)) :
-    real_sol[i] = sol2(t[i])
-    
-######################################### error
 
-error = np.abs(real_sol - solu.y)
-my_error = np.abs(real_sol - y)
+######################################### print
 
-#########################################
-
-print('total_time_solve_ivp = ')
-print(total_time)
-print('my_total_time_myODE45 = ')
+#print(rel_erreur_norm)
+print(t)
+print(y)
 print(my_total_time)
 
 #########################################
 fig = plt.figure()
-plt.title('EDO : dy/dt = -0.5 * y         y(0) = 2         sol : y(t) = 2*exp(-t/2)')
+plt.title('Relative error')
 plt.xlabel('t')
-plt.ylabel('approximation_error')
+plt.ylabel('relative error')
 plt.yscale('log')
-plt.plot(t,error[0],label='solve_ivp_error')
-plt.plot(t,my_error[0],label='myODE45_error')
+plt.plot(t,rel_erreur_norm,label='x')
 plt.legend()
+
+fig = plt.figure()
+plt.xlabel('t')
+plt.ylabel('Y_out(t)')
+plt.plot(t,y[0,:],label='x(t)')
+plt.plot(t,y[1,:],label='y(t)')
+plt.plot(t,y[2,:],label='z(t)')
+plt.legend()
+
 plt.show()

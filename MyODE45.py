@@ -1,33 +1,10 @@
 import numpy as np
 
-# Multiply steps computed from asymptotic behaviour of errors by this.
-SAFETY = 0.9
+def myODE45(fun ,t_span, y0) :
 
-MIN_FACTOR = 0.2  # Minimum allowed decrease in a step size.
-MAX_FACTOR = 10  # Maximum allowed increase in a step size.
-
-ERROR_EXPONENT = -1 / (4 + 1) # 4 est l'ordre de l'erreur d'estimation
-
-def myODE45(fun ,t_span, y0, t_eval) :
-
-    #Explicit Runge-kutta method order 5
-    
-    #Dormand-Prince coefficient
-    A = np.array([
-    [0, 0, 0, 0, 0, 0],
-    [1/5, 0, 0, 0, 0, 0],
-    [3/40, 9/40, 0, 0, 0, 0],
-    [44/45, -56/15, 32/9, 0, 0, 0],
-    [19372/6561, -25360/2187, 64448/6561, -212/729, 0, 0],
-    [9017/3168, -355/33, 46732/5247, 49/176, -5103/18656, 0],
-    [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84]])
-
-    B = np.array([35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0])#next point
-    E = np.array([5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40])#estimation
-    C = np.array([0, 1/5, 3/10, 4/5, 8/9, 1, 1])
-    
-    tol = 0.0001
-    order = 4
+    nfevals = 0
+    nfailed = 0
+    nsteps = 0
     
     size_y0 = np.size(y0)
     
@@ -38,118 +15,271 @@ def myODE45(fun ,t_span, y0, t_eval) :
     output_t[0] = t_span[0]
         
     t = t_span[0]
-    y=y0
-        
-    h=0
-    while t < t_span[1] :
-            #step size
-        if t==t_span[0] :
-            direction = 1
-            f0 = np.array(fun(t,y0))
-            h = choose_first_step(fun, t, y0, f0, direction, order)
-            
-        max_step = t_span[1] - t_span[0]
-        rtol = 1e-3#100 * EPS
-        atol = 1e-6#4 * EPS
-
-        min_step = 10 * np.abs(np.nextafter(t, direction * np.inf) - t)
-            
-        if h > max_step:
-            h = max_step
-        elif h < min_step:
-            h = min_step
-
-        step_accepted = False
-        step_rejected = False
-            
-        while not step_accepted:
-
-            h = h*direction
-            next_t = t + h
-
-            if direction * (next_t - t_span[1]) > 0:
-                next_t = t_span[1]
-
-            h = next_t - t
-            h = np.abs(h)
-
-            next_y, estimation_error = step(fun,t,y,h,A,B,C,E)
-            scale = atol + np.maximum(np.abs(y), np.abs(next_y)) * rtol
-                           
-            error_norm = norm(estimation_error / scale)
-
-            if error_norm < 1:
-                if error_norm == 0:
-                    factor = MAX_FACTOR
-                else:
-                    factor = min(MAX_FACTOR, SAFETY * error_norm ** ERROR_EXPONENT)
-
-                if step_rejected:
-                    factor = min(1, factor)
-
-                h *= factor
-
-                step_accepted = True
-            else:
-                h *= max(MIN_FACTOR, SAFETY * error_norm ** ERROR_EXPONENT)
-                step_rejected = True
-            
-        #next_y = step(fun,t,y,h,A,B,C)
-        #max_estimation_error = step_error(fun,t,y,h,A,B,C,E)
-        
-        to_concatanate_y = np.transpose(np.array([next_y]))
-        output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
-        
-        #next_t = t+h
-        to_concatanate_t = np.array([[next_t]])
-        output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
-            
-        y = next_y
-        t = next_t
-            
-    return (output_t[0], output_y);  
-        
-def choose_first_step(fun, t0, y0, f0, direction, order):
-    EPS = np.finfo(float).eps
-    rtol = 1e-3#100 * EPS
-    atol = 1e-6#4 * EPS
-
-    scale = atol + np.abs(y0) * rtol
-    d0 = norm(y0 / scale)
-    d1 = norm(f0 / scale)
-    if d0 < 1e-5 or d1 < 1e-5:
-        h0 = 1e-6
-    else:
-        h0 = 0.01 * d0 / d1
-
-    y1 = y0 + h0 * direction * f0
-    f1 = fun(t0 + h0 * direction, y1)
-    d2 = norm((f1 - f0) / scale) / h0
-
-    if d1 <= 1e-15 and d2 <= 1e-15:
-        h1 = max(1e-6, h0 * 1e-3)
-    else:
-        h1 = (0.01 / max(d1, d2)) ** (1 / (order + 1))
-
-    return min(100 * h0, h1)
+    y = y0
+    f0 = np.array(fun(t,y0))
     
-def norm(x):
+    #Compute variable like matlab :
+    hmin,htspan,hmax,atol,rtol,threshold,normcontrol,POW,tdir = odearguments(t_span,size_y0)
+    tfinal = t_span[t_span.size-1] #a mettre dans odearguments
+    idxNonNegative = np.array([])
+    nonNegative =  not isempty(idxNonNegative)
+    thresholdNonNegative = np.abs(threshold)
+    
+    if t_span.size > 2 :
+        RequestedPoints = True
+        NEXT=1
+    else :
+        RequestedPoints = False
+        refine = 4
+        if refine > 1 :
+            RefinedSteps = True #Evaluate sol at refined steps
+            S = np.array(range(1,refine))/refine
+        else :
+            RefinedSteps = False #Evaluate sol at solver steps
+    neq = size_y0
+
+    POW = 1/5
+
+    #Explicit Runge-kutta method order 5
+    
+    #Dormand-Prince coefficient
+    A = np.array([1/5, 3/10, 4/5, 8/9, 1, 1])
+    B = np.array([
+    [1/5, 3/40, 44/45, 19372/6561, 9017/3168, 35/384],
+    [0, 9/40, -56/15, -25360/2187, -355/33, 0],
+    [0, 0, 32/9, 64448/6561, 46732/5247, 500/1113],
+    [0, 0, 0, -212/729, 49/176, 125/192],
+    [0, 0, 0, 0, -5103/18656, -2187/6784],
+    [0, 0, 0, 0, 0, 11/84],
+    [0, 0, 0, 0, 0, 0]
+    ])
+    
+    E = np.array([71/57600, 0, -71/16695, 71/1920, -17253/339200, 22/525, -1/40])
+
+    #B = np.array([35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0])#next point
+    #E = np.array([5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40])#estimation
+    
+
+    f = np.zeros((neq,7))
+    hmin = 16*np.finfo(float).eps
+    absh = choose_first_step_matlab(hmin, hmax, htspan, y0, f0, threshold, rtol, normcontrol, POW)
+    f[:,0] = f0
+    
+    #main loop
+    done = False
+    while not done :
+        
+        hmin = 16*np.finfo(float).eps
+        absh = np.minimum(hmax, np.maximum(hmin, absh))
+        h = tdir * absh
+
+        if 1.1*absh >= np.abs(tfinal - t) :
+            h = tfinal - t
+            absh = np.abs(h)
+            done = True
+   
+        # LOOP FOR ADVANCING ONE STEP.
+        nofailed = True  
+        while True :
+            
+            #ynew, estimation_error = step(fun,t,y,h,A,B,C,E)
+            hA = h * A
+            hB = h * B
+            
+            f[:,1] = np.array(fun(t+hA[0],y+np.dot(f,hB[:,0])))
+            f[:,2] = np.array(fun(t+hA[1],y+np.dot(f,hB[:,1])))
+            f[:,3] = np.array(fun(t+hA[2],y+np.dot(f,hB[:,2])))
+            f[:,4] = np.array(fun(t+hA[3],y+np.dot(f,hB[:,3])))
+            f[:,5] = np.array(fun(t+hA[4],y+np.dot(f,hB[:,4])))
+            #f[:,0] = np.array(fun(t+C[6]*h,y+h*(A[6,0]*k0+A[6,1]*k1+A[6,2]*k2+A[6,3]*k3+ A[6,4]*k4+ A[6,5]*k5)))
+            
+            tnew = t + hA[5]
+            if done :
+                tnew = tfinal  
+            h = tnew - t
+            
+            ynew = y + np.dot(f,hB[:,5])
+            f[:,6] = fun(tnew,ynew)
+            nfevals = nfevals + 6
+            
+            #Estimate the error
+            NNrejectStep = False
+            if normcontrol :
+                normynew = np.linalg.norm(ynew)
+                errwt = np.maximum(np.maximum(normy,normynew),threshold)
+                err = absh * (np.linalg.norm(np.dot(f,E)) / errwt)
+                if nonNegative and (err <= rtol) and np.any(ynew(idxNonNegative)<0) :
+                    errNN = np.linalg.norm( np.maximum(0,-ynew(idxNonNegative)) ) / errwt 
+                    if errNN > rtol :
+                        err = errNN
+                        NNrejectStep = True    
+            else :
+                err = absh * (np.linalg.norm(np.dot(f,E) / np.maximum(np.maximum(np.abs(y),np.abs(ynew)),threshold),np.inf))
+                if nonNegative and (err <= rtol) and np.any(ynew(idxNonNegative)<0) :
+                    errNN = np.linalg.norm( np.maximum(0,-ynew(idxNonNegative)) / thresholdNonNegative, np.inf)   
+                    if errNN > rtol :
+                        err = errNN
+                        NNrejectStep = True
+            
+            # Accept the solution only if the weighted error is no more than the
+            # tolerance rtol.  Estimate an h that will yield an error of rtol on
+            # the next step or the next try at taking this step, as the case may be,
+            # and use 0.8 of this value to avoid failures.
+            
+            if err > rtol :# Failed step
+                nfailed = nfailed + 1            
+                if absh <= hmin :
+                    print("Error absh <= hmin")
+                    return
+          
+                if nofailed :
+                    nofailed = False
+                    if NNrejectStep :
+                        absh = np.maximum(hmin, 0.5*absh)
+                    else :
+                        absh = np.maximum(hmin, absh * np.maximum(0.1, 0.8*(rtol/err)**POW))
+                else : 
+                    absh = np.maximum(hmin, 0.5 * absh)
+                h = tdir * absh
+                done = False
+
+            else :# Successful step
+                NNreset_f7 = False
+                if nonNegative and np.any(ynew[idxNonNegative]<0) :
+                    ynew[idxNonNegative] = np.maximum(ynew[idxNonNegative],0)
+                    if normcontrol :
+                        normynew = norm(ynew)
+                    NNreset_f7 = True                 
+                break
+        nsteps = nsteps + 1
+             
+        #GERER LES output
+        if RequestedPoints : #Evaluate only at t_span
+            
+            while NEXT < t_span.size :
+                if t_span[NEXT] == tnew :
+                    to_concatanate_t = np.array([[tnew]])
+                    output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                        
+                    to_concatanate_y = np.transpose(np.array([ynew]))
+                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                    
+                    NEXT = NEXT+1
+                elif t_span[NEXT] < tnew and t < t_span[NEXT] :
+                    
+                    tinterp = t_span[NEXT]
+                    to_concatanate_t = np.array([[tinterp]])
+                    output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                    
+                    yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
+                    to_concatanate_y = np.transpose(np.array([yinterp]))
+                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                    
+                    NEXT = NEXT+1
+                elif t_span[NEXT] > tnew:
+                    break
+        
+        else :
+            if RefinedSteps : #Evaluate at solver steps + refined step
+                for i in range(S.size) :
+                    tinterp = t + h*S[i]
+                    to_concatanate_t = np.array([[tinterp]])
+                    output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                    
+                    yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
+                    to_concatanate_y = np.transpose(np.array([yinterp]))
+                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)  
+                
+                to_concatanate_t = np.array([[tnew]])
+                output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                
+                to_concatanate_y = np.transpose(np.array([ynew]))
+                output_y = np.concatenate((output_y,to_concatanate_y),axis=1)               
+                
+            else : #Evaluate only at solver steps
+                to_concatanate_t = np.array([[tnew]])
+                output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                    
+                to_concatanate_y = np.transpose(np.array([ynew]))
+                output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                
+        
+        if done :
+            break
+        
+        # If there were no failures compute a new h.
+        if nofailed:
+        # Note that absh may shrink by 0.8, and that err may be 0.
+            temp = 1.25*(err/rtol)**POW
+            if temp > 0.2:
+                absh = absh / temp
+            else:
+                absh = 5.0*absh
+      
+        # Advance the integration one step.
+        t = tnew
+        y = ynew
+        if normcontrol:
+            normy = normynew
+            
+        if NNreset_f7 :
+        # Used f7 for unperturbed solution to interpolate.  
+        # Now reset f7 to move along constraint. 
+            f[:,6] = fun(tnew,ynew)
+            nfevals = nfevals + 1
+        f[:,0] = f[:,6]
+            
+    return (output_t[0], output_y)
+
+def ntrp45(tinterp,t,y,tnew,ynew,h,f): #use to interpolate the solution at t_span point
+    BI = np.array([
+    [1, -183/64, 37/12, -145/128],
+    [0, 0 ,0 ,0],
+    [0, 1500/371, -1000/159, 1000/371],
+    [0, -125/32, 125/12, -375/64],
+    [0, 9477/3392, -729/106, 25515/6784],
+    [0, -11/7, 11/3, -55/28],
+    [0, 3/2, -4, 5/2]])
+ 
+    s = ((tinterp - t) / h)*np.ones(4)
+    
+    yinterp = y + np.dot(np.dot(f,(h*BI)),np.cumprod(s))
+    return yinterp
+
+
+def choose_first_step_matlab(hmin, hmax, htspan, y0, f0, threshold, rtol, normcontrol, POW):
+    absh = np.minimum(hmax, htspan)
+    if normcontrol :
+        rh = (np.linalg.norm(f0) / np.maximum(np.linalg.norm(y0),threshold)) / (0.8 * rtol**POW)
+    else :
+        rh = np.linalg.norm(f0 / np.maximum(np.abs(y0),threshold),np.inf) / (0.8 * rtol**POW)
+    if absh * rh > 1 :
+        absh = 1 / rh
+    absh = np.maximum(absh, hmin)
+    return absh
+
+def odearguments(t_span,size_y0):
+    hmin = np.finfo(float).eps
+    htspan = t_span[t_span.size-1]-t_span[0]
+    hmax = 0.1*(htspan)
+    atol = 1e-6*np.ones(size_y0)
+    rtol = 1e-3
+    if rtol < 100*np.finfo(float).eps :
+        rtol = 100*np.finfo(float).eps
+    threshold = atol/rtol
+    normcontrol = False
+    POW = 1/5
+    tdir = 1
+    return hmin,htspan,hmax,atol,rtol,threshold,normcontrol,POW,tdir
+def rms_norm(x):
     """Compute RMS norm."""
     return np.linalg.norm(x) / x.size ** 0.5
 
-def step(fun,t,y,h,A,B,C,E): #a ameliore (pas besoin de calculer 2 fois les coeff K)
-    
-    k0 = np.array(fun(t,y))
-    k1 = np.array(fun(t+C[1]*h,y+h*(A[1,0]*k0)))
-    k2 = np.array(fun(t+C[2]*h,y+h*(A[2,0]*k0+A[2,1]*k1)))
-    k3 = np.array(fun(t+C[3]*h,y+h*(A[3,0]*k0+A[3,1]*k1+A[3,2]*k2)))
-    k4 = np.array(fun(t+C[4]*h,y+h*(A[4,0]*k0+A[4,1]*k1+A[4,2]*k2+A[4,3]*k3)))
-    k5 = np.array(fun(t+C[5]*h,y+h*(A[5,0]*k0+A[5,1]*k1+A[5,2]*k2+A[5,3]*k3+ A[5,4]*k4)))
-    k6 = np.array(fun(t+C[6]*h,y+h*(A[6,0]*k0+A[6,1]*k1+A[6,2]*k2+A[6,3]*k3+ A[6,4]*k4+ A[6,5]*k5)))
-    
-    next_y = y + h*(k0*B[0] + k1*B[1] + k2*B[2] + k3*B[3] + k4*B[4] + k5*B[5] +k6*B[6])
-    estimation = y + h*(k0*E[0] + k1*E[1] + k2*E[2] + k3*E[3] + k4*E[4] + k5*E[5] +k6*E[6])
-    estimation_error = next_y - estimation
+def norm(x):
+    """Compute norm."""
+    return np.linalg.norm(x)
 
-    
-    return next_y, estimation_error
+def isempty(x):
+    if x.size == 0:
+        return True
+    return False
