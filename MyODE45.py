@@ -1,6 +1,13 @@
 import numpy as np
 from inspect import isfunction
 
+from Options import Options
+from Sol import Sol
+from feval import feval
+from isempty import isempty
+from ntrp45 import ntrp45
+from odearguments import odearguments
+
 def myODE45(ode,tspan,y0,options = None, varargin = None) :
         
     solver_name = 'ode45'
@@ -253,158 +260,5 @@ def myODE45(ode,tspan,y0,options = None, varargin = None) :
     sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options)
     return sol
 
-def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
-    
-    if FcnHandlesUsed :
-        tspan = np.array(tspan)
-        if tspan.size < 2 :
-            raise ValueError("pyhton:odearguments:tspan.size < 2")
 
-        htspan = abs(tspan[1] - tspan[0])
-        tspan = np.array(tspan)
-        ntspan = tspan.size
-        t0 = tspan[0]
-        NEXT = 1       # NEXT entry in tspan
-        tfinal = tspan[ntspan-1]
-        args = extras
-        
-    #else :
-        #Todo
 
-    y0 = np.array(y0)
-    neq = y0.size
-    
-    # Test that tspan is internally consistent.
-    if any(np.isnan(tspan)) :
-        raise ValueError("pyhton:odearguments:TspanNaNValues")
-    if t0 == tfinal :
-        raise ValueError("pyhton:odearguments:TspanEndpointsNotDistinct")
-    
-    if tfinal > t0 :
-        tdir = 1
-    else :
-        tdir = -1
-    #tdir = np.sign(tfinal - t0)
-    #print(tdir)
-        
-    if any( tdir*np.diff(tspan) <= 0 ) :
-        raise ValueError("pyhton:odearguments:TspanNotMonotonic")
-    
-    f0 = feval(ode,t0,y0,args) #Regler le prob de args
-    
-    if options == None :     
-        options = Options(neq,tfinal-t0) #Use default values
-    #if options.AbsTol == None :
-        options.AbsTol = 1e-6*np.ones(neq)
-    if options.MaxStep == None:
-        options.MaxStep = np.abs(0.1*(tfinal-t0))
-        
-    rtol = np.array(options.RelTol)
-    if (rtol.size != 1 or rtol <= 0) :
-        raise ValueError("pyhton:odearguments:RelTolNotPosScalar")
-    if rtol < 100*np.finfo(float).eps :
-        rtol = 100*np.finfo(float).eps
-        
-    atol = np.array(options.AbsTol)
-    #if any(atol <= 0) :
-        #raise ValueError("python:odearguments:AbsTolNotPos")
-        
-    normcontrol = options.NormControl
-    if normcontrol :
-        if atol.size != 1 :
-            raise ValueError("python:odearguments:NonScalarAbsTol")
-        normy = np.linalg.norm(y0)
-    else :
-        if ((atol.size != 1) and (atol.size != neq)) :
-            raise ValueError("python:odearguments:SizeAbsTol")
-        atol = np.array(atol)
-        normy = None
-            
-    threshold = atol/rtol
-        
-    hmax = options.MaxStep
-    if hmax <= 0 :
-        raise ValueError("python:odearguments:MaxStepLEzero")
-        
-    htry = options.InitialStep
-    if htry != None :
-        if (not isempty(htry) and (htry <= 0)) :
-            raise ValueError("python:odearguments:InitialStepLEzero")
-        
-    odeFcn = ode
-    dataType = None
-    
-    return neq, tspan, ntspan, NEXT, t0, tfinal, tdir, y0, f0, args, odeFcn, options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, dataType
-        
-
-def ntrp45(tinterp,t,y,tnew,ynew,h,f): #use to interpolate the solution at t_span point
-    BI = np.array([
-    [1, -183/64, 37/12, -145/128],
-    [0, 0 ,0 ,0],
-    [0, 1500/371, -1000/159, 1000/371],
-    [0, -125/32, 125/12, -375/64],
-    [0, 9477/3392, -729/106, 25515/6784],
-    [0, -11/7, 11/3, -55/28],
-    [0, 3/2, -4, 5/2]])
- 
-    s = ((tinterp - t) / h)*np.ones(4)
-    
-    yinterp = y + np.dot(np.dot(f,(h*BI)),np.cumprod(s))
-    return yinterp
-
-def feval(fun,t,y,args) :
-    if args == None :
-        return np.array(fun(t,y))
-    else :
-        return np.array(fun(t,y,*args))
-
-def isempty(x):
-    if x.size == 0:
-        return True
-    return False
-
-class Options :
-        
-    def __init__(self,neq=None,length_tspan=None):
-        self.RelTol = np.array([1e-3])
-        if neq == None :
-            self.AbsTol = None
-        else :
-            self.AbsTol = 1e-6*np.ones(neq)
-        self.NormControl = False
-        if length_tspan == None :
-            self.MaxStep = None
-        else :
-            self.MaxStep = np.abs(0.1*(length_tspan))
-        self.InitialStep = None
-        self.Refine = 4
-        self.NonNegative = np.array([])
-        
-    def odeset(self,string,value) :
-        if string == 'RelTol' :
-            self.RelTol = value
-        elif string == 'AbsTol':
-            self.AbsTol = value
-        elif string == 'NormControl' :
-            self.NormControl = value
-        elif string == 'MaxStep' :
-            self.MaxStep = value
-        elif string == 'InitialStep' :
-            self.InitialStep = value
-        elif string == 'Refine' :
-            self.Refine = value
-        elif string == 'NonNegative' :
-            self.NonNegative = value
-        else :
-            print("Warning:odeset:OptionsNotFoundIgnoreg")
-        
-              
-        
-class Sol :
-    def __init__(self,t,y,nsteps,nfailed,nfevals,options):
-        self.t = t
-        self.y = y
-        self.nsteps = nsteps
-        self.nfailed = nfailed
-        self.nfevals = nfevals
-        self.options = options
