@@ -3,16 +3,18 @@ import numpy as np
 class Options :
         
     def __init__(self,neq=None,length_tspan=None):
-        self.RelTol = np.array([1e-3])
-        if neq == None :
+        
+        if neq is None :
             self.AbsTol = None
         else :
             self.AbsTol = 1e-6*np.ones(neq)
-        self.NormControl = False
-        if length_tspan == None :
+        if length_tspan is None :
             self.MaxStep = None
         else :
             self.MaxStep = np.abs(0.1*(length_tspan))
+            
+        self.NormControl = False  
+        self.RelTol = np.array([1e-3])
         self.InitialStep = None
         self.Refine = 4
         self.NonNegative = np.array([])
@@ -33,4 +35,4 @@ class Options :
         elif string == 'NonNegative' :
             self.NonNegative = value
         else :
-            print("Warning:odeset:OptionsNotFoundIgnoreg")
+            raise Exception("python:odearguments:odeset:OptionsNotFound")

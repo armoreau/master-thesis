@@ -1,6 +1,6 @@
 import numpy as np
 
 def isempty(x):
-    if x.size == 0:
+    if len(x) == 0:
         return True
     return False

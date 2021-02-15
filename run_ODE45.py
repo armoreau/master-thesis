@@ -1,6 +1,6 @@
 from scipy.integrate import solve_ivp
 import Compare_data
-import MyODE45 as My
+import ode45
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -60,7 +60,7 @@ def ode4(t,y) :
 
 tspan = [0,10]
 y0 = [0]
-sol = My.myODE45(ode1,tspan,y0)
+sol = ode45.ode45(ode1,tspan,y0)
 
 ##### real evaluation
 
