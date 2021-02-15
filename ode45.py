@@ -184,28 +184,53 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         #GERER LES output
         if outputAt == 1 : #Evaluate only at t_span
             
-            while NEXT < ntspan :
-                if tspan[NEXT] == tnew :
-                    to_concatanate_t = np.array([[tnew]])
-                    output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+            if tdir == 1 : #tspan is increasing
+                while NEXT < ntspan :
+                    if tspan[NEXT] == tnew :
+                        to_concatanate_t = np.array([[tnew]])
+                        output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                            
+                        to_concatanate_y = np.transpose(np.array([ynew]))
+                        output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
                         
-                    to_concatanate_y = np.transpose(np.array([ynew]))
-                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                        NEXT = NEXT+1
+                    elif tspan[NEXT] < tnew and t < tspan[NEXT] :
+                        
+                        tinterp = tspan[NEXT]
+                        to_concatanate_t = np.array([[tinterp]])
+                        output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                        
+                        yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
+                        to_concatanate_y = np.transpose(np.array([yinterp]))
+                        output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                        
+                        NEXT = NEXT+1
+                    elif tspan[NEXT] > tnew:
+                        break
                     
-                    NEXT = NEXT+1
-                elif tspan[NEXT] < tnew and t < tspan[NEXT] :
-                    
-                    tinterp = tspan[NEXT]
-                    to_concatanate_t = np.array([[tinterp]])
-                    output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
-                    
-                    yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
-                    to_concatanate_y = np.transpose(np.array([yinterp]))
-                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
-                    
-                    NEXT = NEXT+1
-                elif tspan[NEXT] > tnew:
-                    break
+            elif tdir == -1 : #tspan is decreasing
+                while NEXT < ntspan :
+                    if tspan[NEXT] == tnew :
+                        to_concatanate_t = np.array([[tnew]])
+                        output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                            
+                        to_concatanate_y = np.transpose(np.array([ynew]))
+                        output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                        
+                        NEXT = NEXT+1
+                    elif tspan[NEXT] > tnew and t > tspan[NEXT] :
+                        
+                        tinterp = tspan[NEXT]
+                        to_concatanate_t = np.array([[tinterp]])
+                        output_t = np.concatenate((output_t,to_concatanate_t),axis=1)
+                        
+                        yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
+                        to_concatanate_y = np.transpose(np.array([yinterp]))
+                        output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
+                        
+                        NEXT = NEXT+1
+                    elif tspan[NEXT] < tnew:
+                        break
         
         else : 
             if outputAt == 3 : #Evaluate at solver steps + refined step

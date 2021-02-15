@@ -11,7 +11,7 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
         if tspan.size < 2 :
             raise Exception("pyhton:odearguments:tspan.size < 2")
 
-        htspan = abs(tspan[1] - tspan[0])
+        htspan = np.abs(tspan[1] - tspan[0])
         tspan = np.array(tspan)
         ntspan = tspan.size
         t0 = tspan[0]
@@ -42,7 +42,7 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
     f0 = feval(ode,t0,y0,args)
     
     if options is None :     
-        options = Options(neq,tfinal-t0) #Use default values
+        options = Options(neq,np.abs(tfinal-t0)) #Use default values
         
     else :
         if options.AbsTol is None :
