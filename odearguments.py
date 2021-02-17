@@ -58,7 +58,7 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
         
     atol = np.array(options.AbsTol)
     if any(atol <= 0) :
-        raise ValueError("python:odearguments:AbsTolNotPos")
+        raise Exception("python:odearguments:AbsTolNotPos")
         
     normcontrol = options.NormControl
     if normcontrol :

@@ -1,12 +1,12 @@
 import numpy as np
 from inspect import isfunction
-
-from Options import Options
 from Sol import Sol
 from feval import feval
 from isempty import isempty
 from ntrp45 import ntrp45
 from odearguments import odearguments
+from odeevents import odeevents
+from odezero import odezero
 
 def ode45(ode,tspan,y0,options = None, varargin = None) :
         
@@ -44,6 +44,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         S = np.array(range(1,refine))/refine
 
     # Handle the event function
+    haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout=odeevents(FcnHandlesUsed,odeFcn,t0,y0,options,varargin)
     
     # Handle the mass matrix
             
@@ -157,7 +158,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 nfailed = nfailed + 1            
                 if absh <= hmin :
                     print("Warning:python:ode45:IntegrationTolNotMet:absh <= hmin ")
-                    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options)
+                    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options,teout,yeout,ieout)
                     return sol
           
                 if nofailed :
@@ -181,6 +182,28 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 break
         nsteps = nsteps + 1
              
+        if haveEventFcn :
+            te,ye,ie,valt,stop=odezero(None,eventFcn,eventArgs,valt,t,y,tnew,ynew,t0,h,f,idxNonNegative)
+            
+            if not isempty(te) :
+                
+                teout=np.append(teout,te)
+                if isempty(yeout) :
+                    yeout=ye
+                else:
+                    yeout=np.append(yeout,ye,axis=0)
+                ieout=np.append(ieout,ie)
+                
+                if stop :
+                    taux = t + (te[-1] - t)*A
+                    trash, f[:,1:7]=ntrp45(taux,t,y,None,None,h,f,idxNonNegative)
+                    tnew = te[-1]
+                    ynew = ye[:,-1]
+                    h = tnew - t
+                    done = True
+
+             
+        
         #GERER LES output
         if outputAt == 1 : #Evaluate only at t_span
             
@@ -252,6 +275,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
                 
                 to_concatenate_y = np.transpose(np.array([ynew]))
+                
                 output_y = np.concatenate((output_y,to_concatenate_y),axis=1)               
                 
             else : #Evaluate only at solver steps
@@ -285,7 +309,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
             nfevals = nfevals + 1
         f[:,0] = f[:,6]
         
-    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options)
+    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options,teout,yeout,ieout)
     return sol
 
 

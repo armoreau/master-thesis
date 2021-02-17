@@ -1,7 +1,8 @@
 import ode45
-import Options
 import numpy as np
 import matplotlib.pyplot as plt
+from ode45 import ode45
+from Options import Options
 
 def odefcn(t,y,A,B) :
     return np.array([y[1], (A/B)*t* y[0]])
@@ -13,7 +14,7 @@ y0 = np.array([0, 0.01])
 A=1
 B=2
 
-myOptions = Options.Options() #Create an option with default value.
+myOptions = Options() #Create an option with default value.
 myOptions.odeset('RelTol',np.array([1e-5]))
 myOptions.odeset('AbsTol',1e-8*np.ones(y0.size))
 myOptions.odeset('Refine',1)
@@ -21,7 +22,7 @@ myOptions.odeset('NormControl',False)
 myOptions.odeset('MaxStep',np.array([10]))
 myOptions.odeset('InitialStep',np.array([0.1]))
 
-sol = ode45.ode45(odefcn,tspan,y0, myOptions, varargin = (A,B))
+sol = ode45(odefcn,tspan,y0, myOptions, varargin = (A,B))
 
 ########### Plot ode
 
