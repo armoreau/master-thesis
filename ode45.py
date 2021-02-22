@@ -191,7 +191,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 if isempty(yeout) :
                     yeout=ye
                 else:
-                    yeout=np.append(yeout,ye,axis=0)
+                    yeout=np.concatenate((yeout,ye),axis=1)
                 ieout=np.append(ieout,ie)
                 
                 if stop :
@@ -202,8 +202,6 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                     h = tnew - t
                     done = True
 
-             
-        
         #GERER LES output
         if outputAt == 1 : #Evaluate only at t_span
             
@@ -255,14 +253,6 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         
         else : 
             if outputAt == 3 : #Evaluate at solver steps + refined step
-#                for i in range(S.size) :
-#                    tinterp = t + h*S[i]
-#                    to_concatenate_t = np.array([[tinterp]])
-#                    output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
-#                    
-#                    yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f)
-#                    to_concatanate_y = np.transpose(np.array([yinterp]))
-#                    output_y = np.concatenate((output_y,to_concatanate_y),axis=1)
                     
                 tinterp = t + h*S
                 to_concatenate_t = np.array([tinterp])                

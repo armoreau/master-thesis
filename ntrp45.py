@@ -9,18 +9,16 @@ def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative): #use to interpolate the so
     [0, 9477/3392, -729/106, 25515/6784],
     [0, -11/7, 11/3, -55/28],
     [0, 3/2, -4, 5/2]])
- 
-    #s = ((tinterp - t) / h)*np.ones(4)
-    #yinterp = y + np.dot(np.dot(f,(h*BI)),np.cumprod(s))
-    #return yinterp
     
     if type(tinterp) is not type(np.array([])):
         tinterp=np.array([tinterp])
     
     s = ((tinterp - t) / h)
     yinterp = np.transpose(np.tile(y,(len(tinterp),1))) + np.dot(np.dot(f,(h*BI)),np.cumprod(np.tile(s,(4,1)),axis=0))
+    #yinterp = np.transpose(np.tile(y,(len(tinterp),1))) + np.dot(np.dot(f,(h*BI)),np.cumprod(np.tile(s,(1,4)),axis=0))
     
     ncumprod = np.concatenate(([np.ones(len(s))],np.cumprod(np.array([2*s,(3/2)*s,(4/3)*s]),axis=0)),axis=0)
     ypinterp = np.dot(np.dot(f,BI),ncumprod)
+    
     
     return yinterp, ypinterp

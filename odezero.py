@@ -6,16 +6,15 @@ from isempty import isempty
 
 
 def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonNegative) :
-    
     # Initialize.
-    tol = 128*np.maximum(np.finfo(float).eps,np.finfo(float).eps)
+    tol = 128*np.maximum(np.finfo(float(t)).eps,np.finfo(float(tnew)).eps)
     tol = np.minimum(tol, np.abs(tnew - t))
     tout = np.array([])
     yout = np.array([[],[]])
     iout = np.array([])
     
     tdir = np.sign(tnew - t)
-    stop = 0
+    stop = False
     rmin = np.finfo(float).eps
 
     # Set up tL, tR, yL, yR, vL, vR, isterminal and direction.
@@ -28,7 +27,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
     tR = tnew
     yR = ynew
     vR = vnew
-
+    
     # Initialize ttry so that we won't extrapolate if vL or vR is zero.
     ttry = tR
 
@@ -84,10 +83,12 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
                     
             # Compute vtry.
             ytry, trash1 = ntrp45(ttry,t,y,tnew,ynew,h,f,idxNonNegative)
+            ytry = ytry[:,0]
             [vtry, trash2, trash3] = feval(eventfun,ttry,ytry,eventargs)
               
             # Check for any crossings between tL and ttry.
             indzc=[i for i in range(len(direction)) if np.sign(vtry[i])!=np.sign(vL[i]) and direction[i]*(vtry[i]-vL[i])>=0]
+            
             if (not isempty(indzc)):
                 # Move right end of bracket leftward, remembering the old value.
                 tswap = tR
@@ -133,7 +134,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
 
         j = np.ones([len(indzc)])
         add_tout=np.array([tR for i in j])
-        add_yout=np.tile(np.transpose(np.array([yR[:,0]])),len(indzc))
+        add_yout=np.tile(np.transpose(np.array([yR])),len(indzc))
         add_iout=np.transpose(np.array([indzc]))
         if isempty(tout) :
             tout=add_tout
@@ -144,9 +145,9 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
             yout=np.concatenate((yout,add_yout),axis=1)
             iout=np.concatenate((iout,add_iout))
                 
-        if any([isterminal[i] for i in indzc]):
+        if any([isterminal[i] for i in indzc]): #HERE
             if tL != t0:
-                stop = 1
+                stop = True
             break
         elif np.abs(tnew - tR) <= tol :
             #  We're not going to find events closer than tol.
@@ -158,6 +159,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
             vtry = vR
             tL = tR + tdir*0.5*tol          
             yL, trash1 = ntrp45(tL,t,y,tnew,ynew,h,f,idxNonNegative)
+            yL = yL[:,0]
             [vL, trash2, trash3] = feval(eventfun,tL,yL,eventargs)            
             tR = tnew
             yR = ynew
