@@ -1,6 +1,6 @@
 import numpy as np
 
-def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative): #use to interpolate the solution at t_span point
+def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative):
     BI = np.array([
     [1, -183/64, 37/12, -145/128],
     [0, 0 ,0 ,0],
@@ -15,7 +15,6 @@ def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative): #use to interpolate the so
     
     s = ((tinterp - t) / h)
     yinterp = np.transpose(np.tile(y,(len(tinterp),1))) + np.dot(np.dot(f,(h*BI)),np.cumprod(np.tile(s,(4,1)),axis=0))
-    #yinterp = np.transpose(np.tile(y,(len(tinterp),1))) + np.dot(np.dot(f,(h*BI)),np.cumprod(np.tile(s,(1,4)),axis=0))
     
     ncumprod = np.concatenate(([np.ones(len(s))],np.cumprod(np.array([2*s,(3/2)*s,(4/3)*s]),axis=0)),axis=0)
     ypinterp = np.dot(np.dot(f,BI),ncumprod)

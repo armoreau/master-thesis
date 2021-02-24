@@ -19,6 +19,7 @@ class Options :
         self.Refine = 4
         self.NonNegative = np.array([])
         self.Events = None
+        self.Mass = None
         
     def odeset(self,string,value) :
         if string == 'RelTol' :
@@ -37,5 +38,7 @@ class Options :
             self.NonNegative = value
         elif string == 'Events' :
             self.Events = value
+        elif string == 'Mass' :
+            self.Mass = value    
         else :
             raise Exception("python:odearguments:odeset:OptionsNotFound")

@@ -7,6 +7,8 @@ from ntrp45 import ntrp45
 from odearguments import odearguments
 from odeevents import odeevents
 from odezero import odezero
+from odemass import odemass
+from odemassexplicit import odemassexplicit
 
 def ode45(ode,tspan,y0,options = None, varargin = None) :
         
@@ -21,7 +23,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     # Output
     FcnHandlesUsed  = isfunction(ode)
     if not FcnHandlesUsed :
-        raise ValueError("arg1 is not an handle function")
+        raise ValueError("ode is not an handle function")
     
     output_sol = True #(FcnHandlesUsed && (nargout==1))      # sol = odeXX(...)
     output_ty  = False #(~output_sol && (nargout > 0))  # [t,y,...] = odeXX(...)
@@ -44,9 +46,17 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         S = np.array(range(1,refine))/refine
 
     # Handle the event function
-    haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout=odeevents(FcnHandlesUsed,odeFcn,t0,y0,options,varargin)
+    haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout = odeevents(FcnHandlesUsed,odeFcn,t0,y0,options,varargin)
     
     # Handle the mass matrix
+    Mtype, M, Mfun, massArgs, dMoptions = odemass(FcnHandlesUsed,odeFcn,t0,y0,options,varargin)
+    if Mtype > 0 :
+        #check if matrix is singular and raise an arror
+        
+        # Incorporate the mass matrix into odeFcn and odeArgs.
+        odeFcn,odeArgs = odemassexplicit(FcnHandlesUsed,Mtype,odeFcn,odeArgs,Mfun,M)
+        f0 = feval(odeFcn,t0,y0,odeArgs)
+        nfevals = nfevals + 1
             
     #Non-negative solution components
     idxNonNegative = options.NonNegative
@@ -116,11 +126,11 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
             hA = h * A
             hB = h * B
 
-            f[:,1] = feval(ode,t+hA[0],y+np.dot(f,hB[:,0]),odeArgs)
-            f[:,2] = feval(ode,t+hA[1],y+np.dot(f,hB[:,1]),odeArgs)
-            f[:,3] = feval(ode,t+hA[2],y+np.dot(f,hB[:,2]),odeArgs)
-            f[:,4] = feval(ode,t+hA[3],y+np.dot(f,hB[:,3]),odeArgs)
-            f[:,5] = feval(ode,t+hA[4],y+np.dot(f,hB[:,4]),odeArgs)
+            f[:,1] = feval(odeFcn,t+hA[0],y+np.dot(f,hB[:,0]),odeArgs)
+            f[:,2] = feval(odeFcn,t+hA[1],y+np.dot(f,hB[:,1]),odeArgs)
+            f[:,3] = feval(odeFcn,t+hA[2],y+np.dot(f,hB[:,2]),odeArgs)
+            f[:,4] = feval(odeFcn,t+hA[3],y+np.dot(f,hB[:,3]),odeArgs)
+            f[:,5] = feval(odeFcn,t+hA[4],y+np.dot(f,hB[:,4]),odeArgs)
             
             tnew = t + hA[5]
             if done :
@@ -128,7 +138,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
             h = tnew - t # Purify h
             
             ynew = y + np.dot(f,hB[:,5])
-            f[:,6] = feval(ode,tnew,ynew,odeArgs)
+            f[:,6] = feval(odeFcn,tnew,ynew,odeArgs)
             nfevals = nfevals + 6
             
             #Estimate the error
@@ -295,7 +305,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         if NNreset_f7 :
         # Used f7 for unperturbed solution to interpolate.  
         # Now reset f7 to move along constraint. 
-            f[:,6] = feval(ode,tnew,ynew,odeArgs)
+            f[:,6] = feval(odeFcn,tnew,ynew,odeArgs)
             nfevals = nfevals + 1
         f[:,0] = f[:,6]
         
