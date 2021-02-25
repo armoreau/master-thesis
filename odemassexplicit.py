@@ -1,7 +1,7 @@
 import numpy as np
 from feval import feval
 
-def ExplicitSolverHandleMass(t,y,odeFcn,massFcn,varargin) :
+def ExplicitSolverHandleMass(t,y,odeFcn,massFcn,varargin = None) :
     A = feval(massFcn,t,y,varargin)
     b = feval(odeFcn,t,y,varargin)
     yp = np.linalg.lstsq(A, b,rcond=None)[0]

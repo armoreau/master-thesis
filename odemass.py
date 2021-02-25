@@ -1,6 +1,5 @@
 import numpy as np
 from feval import feval
-from Options import Options
 
 def odemass(FcnHandlesUsed,ode,t0,y0,options,extras):
     

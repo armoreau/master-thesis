@@ -9,8 +9,8 @@ L = 1
 g = 9.81
 
 def dydt(t,y) :   
-    dydt = np.array([y[1], m2*L*(y[5]**2)*np.cos(y[4]),y[3],m2*L*(y[5]**2)*np.sin(y[4])-(m1+m2)*g,y[5],-g*L*np.cos(y[4])])
-    return dydt
+    der = np.array([y[1], m2*L*(y[5]**2)*np.cos(y[4]),y[3],m2*L*(y[5]**2)*np.sin(y[4])-(m1+m2)*g,y[5],-g*L*np.cos(y[4])])
+    return der
 
 def mass(t,y) :   
     M = np.zeros([6,6])

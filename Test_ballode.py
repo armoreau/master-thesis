@@ -31,9 +31,9 @@ for i in range(10) :
     res = ode45(dydt,tspan,y0,options)
     nt = len(res.t)
     
-    teout=np.concatenate((teout,res.teout))
-    yeout=np.concatenate((yeout,res.yeout),axis=1)
-    ieout=np.concatenate((ieout,res.ieout))
+    teout=np.concatenate((teout,res.te))
+    yeout=np.concatenate((yeout,res.ye),axis=1)
+    ieout=np.concatenate((ieout,res.ie))
     
     tout=np.concatenate((tout,res.t[1:len(res.t)]))
     yout=np.concatenate((yout,res.y[:,1:len(res.t)]),axis=1)

@@ -1,6 +1,6 @@
 import numpy as np
 from inspect import isfunction
-from Sol import Sol
+from Sol import Sol,Stats,Extdata
 from feval import feval
 from isempty import isempty
 from ntrp45 import ntrp45
@@ -9,6 +9,7 @@ from odeevents import odeevents
 from odezero import odezero
 from odemass import odemass
 from odemassexplicit import odemassexplicit
+from odenonnegative import odenonnegative
 
 def ode45(ode,tspan,y0,options = None, varargin = None) :
         
@@ -61,7 +62,12 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     #Non-negative solution components
     idxNonNegative = options.NonNegative
     nonNegative =  not isempty(idxNonNegative)
-    thresholdNonNegative = np.abs(threshold)
+    #thresholdNonNegative = np.abs(threshold)
+    if nonNegative :
+        odeFcn,thresholdNonNegative,odeArgs = odenonnegative(odeFcn,y0,threshold,idxNonNegative,odeArgs)
+        #odeArgs = (argSup,odeArgs)
+        f0 = feval(odeFcn,t0,y0,odeArgs)
+        nfevals = nfevals + 1
     
     t = t0
     y = y0
@@ -106,7 +112,6 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     #THE MAIN LOOP
     done = False
     while not done :
-        
         # By default, hmin is a small number such that t+hmin is only slightly
         # different than t.  It might be 0 if t is 0.
         hmin = 16*np.finfo(float).eps
@@ -147,15 +152,15 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 normynew = np.linalg.norm(ynew)
                 errwt = np.maximum(np.maximum(normy,normynew),threshold)
                 err = absh * (np.linalg.norm(np.dot(f,E)) / errwt)
-                if nonNegative and (err <= rtol) and np.any(ynew(idxNonNegative)<0) :
-                    errNN = np.linalg.norm( np.maximum(0,-ynew(idxNonNegative)) ) / errwt 
+                if nonNegative and (err <= rtol) and np.any(ynew[idxNonNegative]<0) :
+                    errNN = np.linalg.norm( np.maximum(0,-ynew[idxNonNegative]) ) / errwt 
                     if errNN > rtol :
                         err = errNN
                         NNrejectStep = True    
             else :
                 err = absh * (np.linalg.norm(np.dot(f,E) / np.maximum(np.maximum(np.abs(y),np.abs(ynew)),threshold),np.inf))
-                if nonNegative and (err <= rtol) and np.any(ynew(idxNonNegative)<0) :
-                    errNN = np.linalg.norm( np.maximum(0,-ynew(idxNonNegative)) / thresholdNonNegative, np.inf)
+                if nonNegative and (err <= rtol) and np.any(ynew[idxNonNegative]<0) :
+                    errNN = np.linalg.norm( np.maximum(0,-ynew[idxNonNegative]) / thresholdNonNegative, np.inf)
                     if errNN > rtol :
                         err = errNN
                         NNrejectStep = True
@@ -168,7 +173,9 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 nfailed = nfailed + 1            
                 if absh <= hmin :
                     print("Warning:python:ode45:IntegrationTolNotMet:absh <= hmin ")
-                    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options,teout,yeout,ieout)
+                    extdata = Extdata(odeFcn,options,odeArgs)
+                    stats = Stats(nsteps,nfailed,nfevals)
+                    sol = Sol(solver_name,extdata,output_t[0],output_y,stats,teout,yeout,ieout)
                     return sol
           
                 if nofailed :
@@ -309,7 +316,9 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
             nfevals = nfevals + 1
         f[:,0] = f[:,6]
         
-    sol = Sol(output_t[0], output_y,nsteps,nfailed,nfevals,options,teout,yeout,ieout)
+    extdata = Extdata(odeFcn,options,odeArgs)
+    stats = Stats(nsteps,nfailed,nfevals)
+    sol = Sol(solver_name,extdata,output_t[0],output_y,stats,teout,yeout,ieout)
     return sol
 
 
