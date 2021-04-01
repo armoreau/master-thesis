@@ -29,6 +29,8 @@ def mass(t,y) :
 
 tspan = np.linspace(0,4,25)
 y0 = [0, 4, 2, 20, -np.pi/2, 2]
+#tspan = np.linspace(4,0,25)
+#y0 = np.array([ 19.50532109,   5.14549957,   2.94724687, -20.22935846, 6.42920367,   2.        ])
 options = Options()
 options.odeset('Mass',mass)
 res = ode45(dydt,tspan,y0,options)

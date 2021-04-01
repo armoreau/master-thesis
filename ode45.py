@@ -33,7 +33,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     # Handle solver arguments
     neq, tspan, ntspan, NEXT, t0, tfinal, tdir, y0, f0, odeArgs, odeFcn, options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, dataType = odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin)
     nfevals = nfevals + 1
-    
+
     #Handle the output
     
     refine = np.maximum(1,options.Refine)
@@ -74,15 +74,19 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     
     # Allocate memory if we're generating output.
     
-    output_y = np.zeros((neq,1))
-    output_t = np.zeros((1,1))
+    if outputAt == 1 :
+        output_y = np.zeros((neq,ntspan),dtype=dataType)
+        output_t = np.zeros(ntspan,dtype=dataType)
+    else :
+        output_y = np.zeros((neq,1),dtype=dataType)
+        output_t = np.zeros(1,dtype=dataType)
         
     output_y[:,0] = y0
     output_t[0] = t0
     
     #Initialize method parameters.
     POW = 1/5
-    A = np.array([1/5, 3/10, 4/5, 8/9, 1, 1])
+    A = np.array([1/5, 3/10, 4/5, 8/9, 1, 1],dtype=dataType)
     B = np.array([
     [1/5, 3/40, 44/45, 19372/6561, 9017/3168, 35/384],
     [0, 9/40, -56/15, -25360/2187, -355/33, 0],
@@ -91,11 +95,11 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     [0, 0, 0, 0, -5103/18656, -2187/6784],
     [0, 0, 0, 0, 0, 11/84],
     [0, 0, 0, 0, 0, 0]
-    ])
+    ],dtype=dataType)
     
-    E = np.array([71/57600, 0, -71/16695, 71/1920, -17253/339200, 22/525, -1/40])
-    f = np.zeros((neq,7))
-    hmin = 16*np.finfo(float).eps
+    E = np.array([71/57600, 0, -71/16695, 71/1920, -17253/339200, 22/525, -1/40],dtype=dataType)
+    f = np.zeros((neq,7),dtype=dataType)
+    hmin = 16*np.finfo(float(t)).eps
     
     if htry is None :  # Compute an initial step size h using y'(t).
         absh = np.minimum(hmax, htspan)
@@ -111,10 +115,11 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     f[:,0] = f0
     #THE MAIN LOOP
     done = False
+    stop = False
     while not done :
         # By default, hmin is a small number such that t+hmin is only slightly
         # different than t.  It might be 0 if t is 0.
-        hmin = 16*np.finfo(float).eps
+        hmin = 16*np.finfo(float(t)).eps
         absh = np.minimum(hmax, np.maximum(hmin, absh)) # couldn't limit absh until new hmin
         h = tdir * absh
 
@@ -175,7 +180,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                     print("Warning:python:ode45:IntegrationTolNotMet:absh <= hmin ")
                     extdata = Extdata(odeFcn,options,odeArgs)
                     stats = Stats(nsteps,nfailed,nfevals)
-                    sol = Sol(solver_name,extdata,output_t[0],output_y,stats,teout,yeout,ieout)
+                    sol = Sol(solver_name,extdata,output_t,output_y,stats,teout,yeout,ieout)
                     return sol
           
                 if nofailed :
@@ -208,7 +213,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                 if isempty(yeout) :
                     yeout=ye
                 else:
-                    yeout=np.concatenate((yeout,ye),axis=1)
+                    yeout=np.append(yeout,ye,axis=1)
                 ieout=np.append(ieout,ie)
                 
                 if stop :
@@ -225,72 +230,89 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
             if tdir == 1 : #tspan is increasing
                 while NEXT < ntspan :
                     if tspan[NEXT] == tnew :
-                        to_concatenate_t = np.array([[tnew]])
-                        output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
-                            
-                        to_concatenate_y = np.transpose(np.array([ynew]))
-                        output_y = np.concatenate((output_y,to_concatenate_y),axis=1)
                         
+                        output_t[NEXT] = tnew     
+                        output_y[:,NEXT] = ynew                       
                         NEXT = NEXT+1
+                        
                     elif tspan[NEXT] < tnew and t < tspan[NEXT] :
                         
-                        tinterp = tspan[NEXT]
-                        to_concatenate_t = np.array([[tinterp]])
-                        output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
-                        
-                        yinterp,ypinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative)
-                        output_y = np.concatenate((output_y,yinterp),axis=1)
-                        
+                        first_indice = NEXT
                         NEXT = NEXT+1
+                        while tspan[NEXT] < tnew :
+                            NEXT = NEXT+1
+                        last_indice = NEXT
+                        
+                        tinterp = tspan[first_indice:last_indice]
+                        output_t[first_indice:last_indice] = tinterp
+                        
+                        yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative,Need_ypinterp = False)
+                        output_y[:,first_indice:last_indice] = yinterp
+                        
+                    elif stop == True :
+                        output_t = np.append(output_t,[tnew],axis=0)
+                        
+                        to_concatenate_y = np.transpose(np.array([ynew]))
+                        output_y = np.append(output_y,to_concatenate_y,axis=1)
+                        
+                        break
+                        
                     elif tspan[NEXT] > tnew:
                         break
                     
             elif tdir == -1 : #tspan is decreasing
                 while NEXT < ntspan :
                     if tspan[NEXT] == tnew :
-                        to_concatenate_t = np.array([[tnew]])
-                        output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
-                            
-                        to_concatenate_y = np.transpose(np.array([ynew]))
-                        output_y = np.concatenate((output_y,to_concatenate_y),axis=1)
                         
+                        output_t[NEXT] = tnew
+                        output_y[:,NEXT] = ynew
                         NEXT = NEXT+1
+                        
                     elif tspan[NEXT] > tnew and t > tspan[NEXT] :
                         
-                        tinterp = tspan[NEXT]
-                        to_concatenate_t = np.array([[tinterp]])
-                        output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
-                        
-                        yinterp,ypinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative)
-                        output_y = np.concatenate((output_y,yinterp),axis=1)
-                        
+                        first_indice = NEXT
                         NEXT = NEXT+1
+                        while tspan[NEXT] > tnew :
+                            NEXT = NEXT+1
+                        last_indice = NEXT
+                        
+                        tinterp = tspan[first_indice:last_indice]
+                        output_t[first_indice:last_indice] = tinterp
+                        
+                        yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative,Need_ypinterp = False)
+                        output_y[:,first_indice:last_indice] = yinterp
+                        
+                    elif stop == True : # DEBUG
+                        output_t = np.append(output_t,[tnew],axis=0)
+                        
+                        to_concatenate_y = np.transpose(np.array([ynew]))
+                        output_y = np.append(output_y,to_concatenate_y,axis=1)
+                        
+                        break
+                    
                     elif tspan[NEXT] < tnew:
                         break
         
         else : 
             if outputAt == 3 : #Evaluate at solver steps + refined step
                     
-                tinterp = t + h*S
-                to_concatenate_t = np.array([tinterp])                
-                output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
+                tinterp = t + h*S               
+                output_t = np.append(output_t,tinterp,axis=0)
                 
-                yinterp, ypinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative)
-                output_y = np.concatenate((output_y,yinterp),axis=1)
+                yinterp = ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative,Need_ypinterp = False)
+                output_y = np.append(output_y,yinterp,axis=1)
                 
-                to_concatenate_t = np.array([[tnew]])
-                output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
+                output_t = np.append(output_t,[tnew],axis=0)
                 
                 to_concatenate_y = np.transpose(np.array([ynew]))
                 
-                output_y = np.concatenate((output_y,to_concatenate_y),axis=1)               
+                output_y = np.append(output_y,to_concatenate_y,axis=1)               
                 
             else : #Evaluate only at solver steps
-                to_concatenate_t = np.array([[tnew]])
-                output_t = np.concatenate((output_t,to_concatenate_t),axis=1)
+                output_t = np.append(output_t,[tnew],axis=0)
                     
                 to_concatenate_y = np.transpose(np.array([ynew]))
-                output_y = np.concatenate((output_y,to_concatenate_y),axis=1)
+                output_y = np.append(output_y,to_concatenate_y,axis=1)
                 
         
         if done :
@@ -318,7 +340,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
         
     extdata = Extdata(odeFcn,options,odeArgs)
     stats = Stats(nsteps,nfailed,nfevals)
-    sol = Sol(solver_name,extdata,output_t[0],output_y,stats,teout,yeout,ieout)
+    sol = Sol(solver_name,extdata,output_t,output_y,stats,teout,yeout,ieout)
     return sol
 
 

@@ -83,6 +83,6 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
             raise Exception("python:odearguments:InitialStepLEzero")
         
     odeFcn = ode
-    dataType = None
+    dataType = 'float64'
     
     return neq, tspan, ntspan, NEXT, t0, tfinal, tdir, y0, f0, args, odeFcn, options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, dataType

@@ -22,7 +22,7 @@ def events(t,y):
 
 
 y0 = np.array([1.2, 0, 0, -1.04935750983031990726])
-tspan = np.array([0.0, 7.0])
+tspan = np.array([0,7])
 options = Options()
 options.odeset('Events',events)
 options.odeset('RelTol',np.array([1e-5]))
@@ -30,9 +30,11 @@ options.odeset('AbsTol',np.ones([4])*1e-4)
 
 res = ode45(dydt,tspan,y0,options)
 
+#PLOT
 fig = plt.figure()
 plt.title('Restricted three body problem')
 plt.xlabel('x(t)')
 plt.ylabel('y(t)')
 plt.plot(res.y[0],res.y[1])
+plt.plot(res.ye[0],res.ye[1],'ro')
 plt.show()

@@ -6,7 +6,7 @@ def sin(t,y) :
     dydt = np.cos(t)
     return dydt
 
-def sol_sin(t) : #condition init y[0] = 1
+def sol_sin(t) : #condition init y[0] = 0
     return np.sin(t)
 
 ########### ODE45 approx

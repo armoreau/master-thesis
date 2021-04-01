@@ -15,7 +15,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
     
     tdir = np.sign(tnew - t)
     stop = False
-    rmin = np.finfo(float).eps
+    rmin = np.finfo(float).tiny
 
     # Set up tL, tR, yL, yR, vL, vR, isterminal and direction.
     tL = t
@@ -66,7 +66,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
                             maybe = 0.5
                     elif vR[j] == 0.0:
                         if (tdir*ttry < tdir*tL) and (vtry[j] != vL[j]) :
-                            maybe = vL[j] * (tL-ttry) / ((vtry[j]-vL) * delta)
+                            maybe = vL[j] * (tL-ttry) / ((vtry[j]-vL[j]) * delta)
                             if (maybe < 0) or (maybe > 1):
                                 maybe = 0.5
                         else:

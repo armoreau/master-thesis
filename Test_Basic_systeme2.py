@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ode45 import ode45
 
+#Van der pol equation
 def syst(t,y) :
     dydt = np.zeros(2)
     dydt[0] = y[1]
-    dydt[1] = (5-y[1]**2)*y[1]-y[0]
+    dydt[1] = (1-y[0]**2)*y[1]-y[0]
     return dydt
 
 ########### ODE45 approx

@@ -1,6 +1,6 @@
 import numpy as np
 
-def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative):
+def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative,Need_ypinterp = True):
     BI = np.array([
     [1, -183/64, 37/12, -145/128],
     [0, 0 ,0 ,0],
@@ -16,8 +16,9 @@ def ntrp45(tinterp,t,y,tnew,ynew,h,f,idxNonNegative):
     s = ((tinterp - t) / h)
     yinterp = np.transpose(np.tile(y,(len(tinterp),1))) + np.dot(np.dot(f,(h*BI)),np.cumprod(np.tile(s,(4,1)),axis=0))
     
-    ncumprod = np.concatenate(([np.ones(len(s))],np.cumprod(np.array([2*s,(3/2)*s,(4/3)*s]),axis=0)),axis=0)
-    ypinterp = np.dot(np.dot(f,BI),ncumprod)
-    
-    
-    return yinterp, ypinterp
+    if Need_ypinterp :
+        ncumprod = np.append([np.ones(len(s))],np.cumprod(np.array([2*s,(3/2)*s,(4/3)*s]),axis=0),axis=0)
+        ypinterp = np.dot(np.dot(f,BI),ncumprod)
+        return yinterp, ypinterp
+    else :
+        return yinterp

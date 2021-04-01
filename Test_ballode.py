@@ -16,14 +16,15 @@ tstart = 0
 tfinal = 30
 y0 = np.array([0.0, 20.0])
 options = Options()
+options.odeset('Refine',100) #More beautiful
 options.odeset('Events',events)
 
 tout = np.array([tstart])
 yout = np.array([[y0[0]],[y0[1]]])
 
-teout = np.array([])
-yeout = np.array([[],[]])
-ieout = np.array([])
+teout = np.array([0])
+yeout = np.array([[0],[0]])
+ieout = np.array([0])
 
 for i in range(10) :
     
@@ -46,9 +47,11 @@ for i in range(10) :
     
     tstart = res.t[nt-1]
     
+#PLOT
 fig = plt.figure()
 plt.title('Ball trajectory and the events')
 plt.xlabel('time')
 plt.ylabel('height')
 plt.plot(tout,yout[0],label='position')
+plt.plot(teout, yeout[0], 'ro')
 plt.show()

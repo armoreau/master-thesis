@@ -17,7 +17,7 @@ myOptions.odeset('RelTol',np.array([1e-5]))
 myOptions.odeset('AbsTol',1e-8*np.ones(y0.size))
 myOptions.odeset('Refine',10)
 myOptions.odeset('NormControl',True)
-myOptions.odeset('MaxStep',10)
+myOptions.odeset('MaxStep',1)
 myOptions.odeset('InitialStep',np.array([0.1]))
 
 sol = ode45(sin,tspan,y0, myOptions)
