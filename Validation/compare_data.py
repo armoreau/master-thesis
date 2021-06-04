@@ -22,3 +22,24 @@ def compare_data(MatlabFileName, PythonFileName, digit):
     
     Boolean_vector = rounded_data_Matlab == rounded_data_python
     return Boolean_vector.all()
+
+def max_rel_error(MatlabFileName, PythonFileName):
+    
+    data_Matlab = np.array([ float(z) for z in open(MatlabFileName, 'r').read().split() ])
+    data_python = np.array([ float(z) for z in open(PythonFileName, 'r').read().split() ])
+    
+    if(len(data_Matlab) != len(data_python)) :
+        return 1000 #Data not comparable
+    
+    abs_diff = np.abs(data_Matlab - data_python)
+    rel_diff = abs_diff
+    
+    length = len(abs_diff)
+    for i in range(length) :
+        if (np.abs(data_Matlab[i]) > 1) :
+            rel_diff[i] = abs_diff[i]/np.abs(data_Matlab[i])
+            
+    if len(rel_diff) == 0:
+        return 0
+    else :
+        return np.max(rel_diff)
