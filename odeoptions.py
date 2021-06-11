@@ -1,23 +1,14 @@
-import numpy as np
-
 class Odeoptions :
         
-    def __init__(self,neq=None,length_tspan=None):
-        
-        if neq is None :
-            self.AbsTol = None
-        else :
-            self.AbsTol = 1e-6*np.ones(neq)
-        if length_tspan is None :
-            self.MaxStep = None
-        else :
-            self.MaxStep = np.abs(0.1*(length_tspan))
-            
-        self.NormControl = False  
-        self.RelTol = np.array([1e-3])
+    def __init__(self,length_tspan=None):
+         
+        self.RelTol = 1e-3
+        self.AbsTol = 1e-6
+        self.NormControl = False 
+        self.MaxStep = None 
         self.InitialStep = None
         self.Refine = 4
-        self.NonNegative = np.array([])
+        self.NonNegative = []
         self.Events = None
         self.Mass = None
         self.MStateDependence = 'weak'

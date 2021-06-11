@@ -26,16 +26,11 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     if not FcnHandlesUsed :
         raise ValueError("ode is not an handle function")
     
-    output_sol = True #(FcnHandlesUsed && (nargout==1))      # sol = odeXX(...)
-    output_ty  = False #(~output_sol && (nargout > 0))  # [t,y,...] = odeXX(...)
-    #There might be no output requested...
-    
     # Handle solver arguments
     neq, tspan, ntspan, NEXT, t0, tfinal, tdir, y0, f0, odeArgs, odeFcn, options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, dataType = odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin)
     nfevals = nfevals + 1
 
     #Handle the output
-    
     refine = np.maximum(1,options.Refine)
     
     if ntspan > 2 :
@@ -51,29 +46,24 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
     
     # Handle the mass matrix
     Mtype, M, Mfun = odemass(FcnHandlesUsed,odeFcn,t0,y0,options,varargin)
-    if Mtype > 0 :
-        #check if matrix is singular and raise an arror
-        
+    if Mtype > 0 :        
         # Incorporate the mass matrix into odeFcn and odeArgs.
         odeFcn,odeArgs = odemassexplicit(FcnHandlesUsed,Mtype,odeFcn,odeArgs,Mfun,M)
         f0 = feval(odeFcn,t0,y0,odeArgs)
         nfevals = nfevals + 1
             
     #Non-negative solution components
-    idxNonNegative = options.NonNegative
-    nonNegative =  not isempty(idxNonNegative)
-    #thresholdNonNegative = np.abs(threshold)
+    nonNegative =  not isempty(options.NonNegative)
+    idxNonNegative = np.array(options.NonNegative)
     if nonNegative :
         odeFcn,thresholdNonNegative,odeArgs = odenonnegative(odeFcn,y0,threshold,idxNonNegative,odeArgs)
-        #odeArgs = (argSup,odeArgs)
         f0 = feval(odeFcn,t0,y0,odeArgs)
         nfevals = nfevals + 1
     
     t = t0
     y = y0
     
-    # Allocate memory if we're generating output.
-    
+    # Allocate memory for generating output.
     if outputAt == 1 :
         output_y = np.zeros((neq,ntspan),dtype=dataType)
         output_t = np.zeros(ntspan,dtype=dataType)
@@ -224,7 +214,7 @@ def ode45(ode,tspan,y0,options = None, varargin = None) :
                     h = tnew - t
                     done = True
 
-        #GERER LES output
+        #Manage output
         if outputAt == 1 : #Evaluate only at t_span
             
             if tdir == 1 : #tspan is increasing

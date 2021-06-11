@@ -1,11 +1,11 @@
 import numpy as np
 from feval import feval
 
-#Est ce que ode et idxNOnNegative sont reconnu ???
 def local_odeFcn_nonnegative(t,y,ode,idxNonNegative,varargin = None) :
     yp = feval(ode,t,y,varargin)
     ndx = [i for i in range(len(idxNonNegative)) if y[i] <= 0]
-    yp[ndx] = np.maximum(yp[ndx],0)
+    for i in ndx :
+        yp[i] = np.maximum(yp[i],0)
     return yp
 
 

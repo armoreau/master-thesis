@@ -13,5 +13,5 @@ def odemassexplicit(FcnHandlesUsed,massType,odeFcn,odeArgs,massFcn,massM) :
         new_odeFcn = ExplicitSolverHandleMass
         odeArgs = (odeFcn,massFcn,odeArgs)
         return new_odeFcn,odeArgs
-    else : #ode-file use TODO
+    else :
         return odeFcn,odeArgs

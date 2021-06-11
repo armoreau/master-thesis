@@ -4,7 +4,6 @@ from feval import feval
 from ntrp45 import ntrp45
 from isempty import isempty
 
-
 def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonNegative) :
     # Initialize.
     tol = 128*np.maximum(np.finfo(float(t)).eps,np.finfo(float(tnew)).eps)
@@ -145,7 +144,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
             yout=np.concatenate((yout,add_yout),axis=1)
             iout=np.concatenate((iout,add_iout))
                 
-        if any([isterminal[i] for i in indzc]): #HERE
+        if any([isterminal[i] for i in indzc]):
             if tL != t0:
                 stop = True
             break

@@ -11,7 +11,7 @@ def odemass(FcnHandlesUsed,ode,t0,y0,options,extras):
      
     Moption = options.Mass
     if Moption is None :
-        return massType, massM, massFcn #, massArgs, dMoptions
+        return massType, massM, massFcn
     elif not callable(Moption):
         massType = 1
         massM = Moption
@@ -29,4 +29,4 @@ def odemass(FcnHandlesUsed,ode,t0,y0,options,extras):
         else:
             raise Exception("python:odemass:MStateDependenceMassType")
             
-        return massType, massM, massFcn #, massArgs, dMoptions
+        return massType, massM, massFcn

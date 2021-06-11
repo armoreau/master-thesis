@@ -3,7 +3,6 @@ from isempty import isempty
 from odeoptions import Odeoptions
 from feval import feval
 
-
 def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
     
     if FcnHandlesUsed :
@@ -18,9 +17,6 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
         NEXT = 1       # NEXT entry in tspan
         tfinal = tspan[ntspan-1]
         args = extras
-        
-    #else :
-        #Todo
 
     y0 = np.array(y0)
     neq = len(y0)
@@ -42,21 +38,23 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
     f0 = feval(ode,t0,y0,args)
     
     if options is None :     
-        options = Odeoptions(neq,np.abs(tfinal-t0)) #Use default values
+        options = Odeoptions() #Use default values
         
-    else :
-        if options.AbsTol is None :
-            options.AbsTol = 1e-6*np.ones(neq)
-        if options.MaxStep is None :
-            options.MaxStep = np.abs(0.1*(tfinal-t0))
+    if options.MaxStep is None :
+        options.MaxStep = np.abs(0.1*(tfinal-t0))
         
-    rtol = np.array(options.RelTol)
+    rtol = np.array([options.RelTol])
     if (len(rtol) != 1 or rtol <= 0) :
         raise Exception("pyhton:odearguments:RelTolNotPosScalar")
     if rtol < 100*np.finfo(float).eps :
         rtol = 100*np.finfo(float).eps
+    
+    atol = options.AbsTol
+    if isinstance(atol,list):
+        atol = np.array(atol)
+    else :
+        atol = np.array([atol])
         
-    atol = np.array(options.AbsTol)
     if any(atol <= 0) :
         raise Exception("python:odearguments:AbsTolNotPos")
         
@@ -68,18 +66,17 @@ def odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras):
     else :
         if ((len(atol) != 1) and (len(atol) != neq)) :
             raise Exception("python:odearguments:SizeAbsTol")
-        atol = np.array(atol)
         normy = None
             
     threshold = atol/rtol
         
-    hmax = options.MaxStep
+    hmax = np.array([options.MaxStep])
     if hmax <= 0 :
         raise Exception("python:odearguments:MaxStepLEzero")
         
     htry = options.InitialStep
     if htry is not None :
-        if (not isempty(htry) and (htry <= 0)) :
+        if htry <= 0 :
             raise Exception("python:odearguments:InitialStepLEzero")
         
     odeFcn = ode
