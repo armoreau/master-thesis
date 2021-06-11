@@ -33,10 +33,6 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
     if not FcnHandlesUsed :
         raise ValueError("ode is not an handle function")
     
-    output_sol = True #(FcnHandlesUsed && (nargout==1))      # sol = odeXX(...)
-    output_ty  = False #(~output_sol && (nargout > 0))  # [t,y,...] = odeXX(...)
-    #There might be no output requested...
-    
     # Handle solver arguments
     neq, tspan, ntspan, NEXT, t0, tfinal, tdir, y0, f0, odeArgs, odeFcn, options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, dataType = odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin)
     nfevals = nfevals + 1
@@ -129,16 +125,9 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
         
         h = scipyStep[plop]
         plop = plop +1
-        # By default, hmin is a small number such that t+hmin is only slightly
-        # different than t.  It might be 0 if t is 0.
-#        hmin = 16*np.finfo(float(t)).eps
-#        absh = np.minimum(hmax, np.maximum(hmin, absh)) # couldn't limit absh until new hmin
-#        h = tdir * absh
         absh = h
         # Stretch the step if within 10% of tfinal-t.
-        if 1.1*absh >= np.abs(tfinal - t) :
-            h = tfinal - t
-            absh = np.abs(h)
+        if plop >= len(scipyStep) :
             done = True
    
         # LOOP FOR ADVANCING ONE STEP.
@@ -163,49 +152,6 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
             ynew = y + np.dot(f,hB[:,5])
             f[:,6] = feval(odeFcn,tnew,ynew,odeArgs)
             nfevals = nfevals + 6
-            
-            #Estimate the error
-#            NNrejectStep = False
-#            if normcontrol :
-#                normynew = np.linalg.norm(ynew)
-#                errwt = np.maximum(np.maximum(normy,normynew),threshold)
-#                err = absh * (np.linalg.norm(np.dot(f,E)) / errwt)
-#                if nonNegative and (err <= rtol) and np.any(ynew[idxNonNegative]<0) :
-#                    errNN = np.linalg.norm( np.maximum(0,-ynew[idxNonNegative]) ) / errwt 
-#                    if errNN > rtol :
-#                        err = errNN
-#                        NNrejectStep = True    
-#            else :
-#                err = absh * (np.linalg.norm(np.dot(f,E) / np.maximum(np.maximum(np.abs(y),np.abs(ynew)),threshold),np.inf))
-#                if nonNegative and (err <= rtol) and np.any(ynew[idxNonNegative]<0) :
-#                    errNN = np.linalg.norm( np.maximum(0,-ynew[idxNonNegative]) / thresholdNonNegative, np.inf)
-#                    if errNN > rtol :
-#                        err = errNN
-#                        NNrejectStep = True
-            
-            # Accept the solution only if the weighted error is no more than the
-            # tolerance rtol.  Estimate an h that will yield an error of rtol on
-            # the next step or the next try at taking this step, as the case may be,
-            # and use 0.8 of this value to avoid failures.
-#            if err > rtol :# Failed step
-#                nfailed = nfailed + 1            
-#                if absh <= hmin :
-#                    print("Warning:python:ode45:IntegrationTolNotMet:absh <= hmin ")
-#                    extdata = Extdata(odeFcn,options,odeArgs)
-#                    stats = Stats(nsteps,nfailed,nfevals)
-#                    oderesult = Oderesult(solver_name,extdata,output_t,output_y,stats,teout,yeout,ieout)
-#                    return oderesult
-#          
-#                if nofailed :
-#                    nofailed = False
-#                    if NNrejectStep :
-#                        absh = np.maximum(hmin, 0.5*absh)
-#                    else :
-#                        absh = np.maximum(hmin, absh * np.maximum(0.1, 0.8*(rtol/err)**POW))
-#                else : 
-#                    absh = np.maximum(hmin, 0.5 * absh)
-#                h = tdir * absh
-#                done = False
 
             #else : # Successful step
             NNreset_f7 = False
@@ -330,14 +276,7 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
         
         if done :
             break
-        # If there were no failures compute a new h.
-#        if nofailed:
-#        # Note that absh may shrink by 0.8, and that err may be 0.
-#            temp = 1.25*(err/rtol)**POW
-#            if temp > 0.2:
-#                absh = absh / temp
-#            else:
-#                absh = 5.0*absh
+        
         # Advance the integration one step.
         t = tnew
         y = ynew
@@ -355,6 +294,3 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
     stats = Stats(nsteps,nfailed,nfevals)
     oderesult = Oderesult(solver_name,extdata,output_t,output_y,stats,teout,yeout,ieout)
     return oderesult
-
-
-
