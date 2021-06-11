@@ -28,12 +28,12 @@ def events(t,y):
     return [value,isterminal,direction]
 
 
-y0 = np.array([1.2, 0, 0, -1.04935750983031990726])
-tspan = np.array([0,7])
+y0 = [1.2, 0, 0, -1.04935750983031990726]
+tspan = [0,7]
 options = Odeoptions()
 options.odeset('Events',events)
-options.odeset('RelTol',np.array([1e-5]))
-options.odeset('AbsTol',np.ones([4])*1e-4)
+options.odeset('RelTol',1e-5)
+options.odeset('AbsTol',1e-4)
 
 res = ode45(dydt,tspan,y0,options)
 

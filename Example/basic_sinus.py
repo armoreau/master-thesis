@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 #Add parent folder to the path. Code taken from https://codeolives.com/2020/01/10/python-reference-module-in-parent-directory/
@@ -8,21 +9,18 @@ sys.path.append(parentdir)
 
 from ode45 import ode45
 
-def odefcn(t,y,A,B) :
-    return [y[1], (A/B)*t* y[0]]
+def sin(t,y) :
+    return np.cos(t)
 
-tspan = [0, 5]
-y0 = [0, 0.01]
-A = 1
-B = 2
-argsup = [A, B]
+tspan = [0,10]
+y0 = [0]
 
-sol = ode45(odefcn, tspan, y0, options = None, varargin = argsup)
+sol = ode45(sin,tspan,y0)
+
+#Plot ode45 approx
 fig = plt.figure()
-plt.title('parameter function')
+plt.title('Ode45 approx')
 plt.xlabel('t')
 plt.ylabel('y')
-plt.plot(sol.t,sol.y[0],label="y_1")
-plt.plot(sol.t,sol.y[1],label="y_2")
-plt.legend()
+plt.plot(sol.t,sol.y[0])
 plt.show()

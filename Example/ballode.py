@@ -11,19 +11,19 @@ from odeoptions import Odeoptions
 from ode45 import ode45
 
 def events(t,y):
-    value = np.array([y[0]])
-    isterminal = np.array([1])
-    direction = np.array([-1])
+    value = [y[0]]
+    isterminal = [1]
+    direction = [-1]
     return [value,isterminal,direction]
 
 def dydt(t,y):
-    return np.array([y[1],-9.8])
+    return [y[1],-9.8]
 
 tstart = 0
 tfinal = 30
-y0 = np.array([0.0, 20.0])
+y0 = [0.0, 20.0]
 options = Odeoptions()
-options.odeset('Refine',100) #More beautiful
+options.odeset('Refine',10)
 options.odeset('Events',events)
 
 tout = np.array([tstart])
@@ -49,7 +49,7 @@ for i in range(10) :
     y0[0] = 0
     y0[1] = -0.9*res.y[1,nt-1]
     
-    options.odeset('InitialStep',np.array([res.t[nt-1]-res.t[nt-4-1]]))
+    options.odeset('InitialStep',res.t[nt-1]-res.t[nt-4-1])
     options.odeset('MaxStep',res.t[nt-1]-res.t[0])
     
     tstart = res.t[nt-1]
@@ -57,8 +57,8 @@ for i in range(10) :
 #PLOT
 fig = plt.figure()
 plt.title('Ball trajectory and the events')
-plt.xlabel('time')
-plt.ylabel('height')
+plt.xlabel('time [s]')
+plt.ylabel('height [m]')
 plt.plot(tout,yout[0],label='position')
 plt.plot(teout, yeout[0], 'ro')
 plt.show()

@@ -8,21 +8,21 @@ sys.path.append(parentdir)
 
 from ode45 import ode45
 
-def odefcn(t,y,A,B) :
-    return [y[1], (A/B)*t* y[0]]
+def syst(t, y):
+    return [y[1]+y[2], -y[0]+2*y[1]+y[2], y[0]+y[2]]
 
-tspan = [0, 5]
-y0 = [0, 0.01]
-A = 1
-B = 2
-argsup = [A, B]
+tspan = [0,2]
+y0 = [2,4,6]
 
-sol = ode45(odefcn, tspan, y0, options = None, varargin = argsup)
+sol = ode45(syst,tspan,y0)
+    
+#Plot ode45 approx
 fig = plt.figure()
-plt.title('parameter function')
+plt.title('Ode45 approx')
 plt.xlabel('t')
 plt.ylabel('y')
-plt.plot(sol.t,sol.y[0],label="y_1")
-plt.plot(sol.t,sol.y[1],label="y_2")
+plt.plot(sol.t,sol.y[0],label="y_1(t)")
+plt.plot(sol.t,sol.y[1],label="y_2(t)")
+plt.plot(sol.t,sol.y[2],label="y_3(t)")
 plt.legend()
 plt.show()

@@ -15,21 +15,17 @@ def odefcn(x,y) :
     return ((1 - x)*y - y**2)/epsilon
 
 epsilon = 1e-6
-y0 = np.array([1])
-xspan = np.array([0, 2])
-
-
+y0 = [1]
+xspan = [0, 2]
 options = Odeoptions()
-#[x1,y1] = ode15s(@odefcn,xspan,y0,options);
+options.odeset('NonNegative',[0])
 
-# Impose non-negativity constraint
-options.odeset('NonNegative',np.array([0]))
 res = ode45(odefcn,xspan,y0,options)
 
 fig = plt.figure()
 
 plt.title('The knee problem');
 plt.xlabel('x');
-plt.ylabel('solution y')
+plt.ylabel('y')
 plt.plot(res.t,res.y[0],label='Non-negativity')
 plt.show()
