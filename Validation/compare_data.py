@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-#arrondi un vecteur avec digit chiffre significatif
+#rounded vector with digit significant digit
 def signif(x, digit):
     toRet = np.zeros(len(x))
     for i in range(len(x)):
@@ -11,7 +11,6 @@ def signif(x, digit):
             toRet[i] = round(x[i], digit - int(math.floor(math.log10(abs(x[i])))) - 1)
     return toRet
 
-#On peut aussi regarder la différence si |data_Matlab-data_python| < tol. avec tol= 10e-3
 def compare_data(MatlabFileName, PythonFileName, digit):
         
     data_Matlab = np.array([ float(z) for z in open(MatlabFileName, 'r').read().split() ])
@@ -29,7 +28,7 @@ def max_rel_error(MatlabFileName, PythonFileName):
     data_python = np.array([ float(z) for z in open(PythonFileName, 'r').read().split() ])
     
     if(len(data_Matlab) != len(data_python)) :
-        return 1000 #Data not comparable
+        return 1000 #Key for not comparable data
     
     abs_diff = np.abs(data_Matlab - data_python)
     rel_diff = abs_diff

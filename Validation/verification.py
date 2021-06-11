@@ -44,14 +44,6 @@ for INPUT in range(nbr_input) :
                        Test11,Test12,Test13,Test14,Test15,Test16,Test17,Test18,Test19,Test20,
                        Test21,Test22,Test23,Test24,Test25,Test26,Test27,Test28,Test29,Test30])
 
-#pas grave
-#Input7_test16 failure Warning: Matlab and python absh <= hmin
-#Input12_Test16 idem
-#input23_test16 idem
-    
-#Input7_test28 Data not comparable too high nstep.
-#Input31_test20 Data not comparable too high nstep.
-
 idem = 0
 idem15 = 0
 idem14 = 0
@@ -108,11 +100,8 @@ for i in range(nbr_input) :
             idem1 = idem1 +1
         else :
             error = error +1
-            
+      
 #Make barplot
-            
-#height = np.array([error, idem1, idem2, idem3, idem4, idem5, idem6, idem7, idem8, idem9, idem10, idem11, idem12, idem13, idem14, idem15, idem])
-#bars = ('Erreur', '< e-1', '< e-2', '< e-3', '< e-4', '< e-5', '< e-6', '< e-7', '< e-8', '< e-9', '< e-10', '< e-11', '< e-12', '< e-13', '< e-14', '< e-15', 'Ok')
 
 height = np.array([error, idem6, idem7, idem8, idem9, idem10, idem11, idem12, idem13, idem14, idem15, idem])
 bars = ('Erreur', '< e-6', '< e-7', '< e-8', '< e-9', '< e-10', '< e-11', '< e-12', '< e-13', '< e-14', '< e-15', 'Ok')
