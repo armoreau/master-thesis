@@ -9,7 +9,6 @@ sys.path.append(parentdir)
 
 from oderesult import Oderesult,Stats,Extdata
 from feval import feval
-from isempty import isempty
 from ntrp45 import ntrp45
 from odearguments import odearguments
 from odeevents import odeevents
@@ -64,7 +63,7 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
             
     #Non-negative solution components
     idxNonNegative = options.NonNegative
-    nonNegative =  not isempty(idxNonNegative)
+    nonNegative =  len(idxNonNegative) != 0
     #thresholdNonNegative = np.abs(threshold)
     if nonNegative :
         odeFcn,thresholdNonNegative,odeArgs = odenonnegative(odeFcn,y0,threshold,idxNonNegative,odeArgs)
@@ -166,10 +165,10 @@ def ode45_scipyStep(ode,tspan,y0,scipyStep,options = None, varargin = None) :
         if haveEventFcn :
             te,ye,ie,valt,stop=odezero(None,eventFcn,eventArgs,valt,t,y,tnew,ynew,t0,h,f,idxNonNegative)
             
-            if not isempty(te) :
+            if len(te) != 0 :
                 
                 teout=np.append(teout,te)
-                if isempty(yeout) :
+                if len(yeout) ==0 :
                     yeout=ye
                 else:
                     yeout=np.append(yeout,ye,axis=1)
