@@ -2,7 +2,6 @@ import numpy as np
 
 from feval import feval
 from ntrp45 import ntrp45
-from isempty import isempty
 
 def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonNegative) :
     # Initialize.
@@ -21,7 +20,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
     yL = y
     vL = v
     [vnew,isterminal,direction] = feval(eventfun,tnew,ynew,eventargs)
-    if isempty(direction) :
+    if len(direction) == 0:
         direction = np.zeros(len(vnew))   # zeros crossings in any direction
     tR = tnew
     yR = ynew
@@ -37,7 +36,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
             # Events of interest shouldn't have disappeared, but new ones might
             # be found in other elements of the v vector.
             indzc = [i for i in range(len(direction)) if np.sign(vR[i])!=np.sign(vL[i]) and direction[i]*(vR[i]-vL[i])>=0]
-            if isempty(indzc) :
+            if len(indzc) == 0 :
                 if lastmoved != 0 :
                     raise Exception('ode45:odezero:LostEvent')
                 else :
@@ -88,7 +87,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
             # Check for any crossings between tL and ttry.
             indzc=[i for i in range(len(direction)) if np.sign(vtry[i])!=np.sign(vL[i]) and direction[i]*(vtry[i]-vL[i])>=0]
             
-            if (not isempty(indzc)):
+            if (len(indzc) != 0):
                 # Move right end of bracket leftward, remembering the old value.
                 tswap = tR
                 tR = ttry
@@ -135,7 +134,7 @@ def odezero(ntrpfun, eventfun, eventargs, v, t, y, tnew, ynew, t0, h, f, idxNonN
         add_tout=np.array([tR for i in j])
         add_yout=np.tile(np.transpose(np.array([yR])),len(indzc))
         add_iout=np.transpose(np.array([indzc]))
-        if isempty(tout) :
+        if len(tout) == 0 :
             tout=add_tout
             yout=add_yout
             iout=add_iout

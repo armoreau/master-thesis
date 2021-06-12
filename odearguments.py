@@ -1,5 +1,4 @@
 import numpy as np
-from isempty import isempty
 from odeoptions import Odeoptions
 from feval import feval
 
